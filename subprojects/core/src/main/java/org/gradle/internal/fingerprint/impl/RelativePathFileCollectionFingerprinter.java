@@ -21,11 +21,12 @@ import org.gradle.api.tasks.FileNormalizer;
 import org.gradle.internal.fingerprint.DirectorySensitivity;
 import org.gradle.internal.fingerprint.FileCollectionSnapshotter;
 import org.gradle.internal.fingerprint.RelativePathInputNormalizer;
+import org.gradle.internal.fingerprint.SnapshotHashCodeNormalizer;
 
 public class RelativePathFileCollectionFingerprinter extends AbstractFileCollectionFingerprinter {
 
-    public RelativePathFileCollectionFingerprinter(StringInterner stringInterner, DirectorySensitivity directorySensitivity, FileCollectionSnapshotter fileCollectionSnapshotter) {
-        super(new RelativePathFingerprintingStrategy(stringInterner, directorySensitivity), fileCollectionSnapshotter);
+    public RelativePathFileCollectionFingerprinter(StringInterner stringInterner, DirectorySensitivity directorySensitivity, FileCollectionSnapshotter fileCollectionSnapshotter, SnapshotHashCodeNormalizer snapshotHashCodeNormalizer) {
+        super(new RelativePathFingerprintingStrategy(stringInterner, directorySensitivity, snapshotHashCodeNormalizer), fileCollectionSnapshotter);
     }
 
     @Override

@@ -17,48 +17,64 @@ package org.gradle.api.internal.changedetection.state;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
-import org.gradle.api.internal.cache.StringInterner;
 import org.gradle.cache.PersistentIndexedCache;
 import org.gradle.cache.PersistentIndexedCacheParameters;
 import org.gradle.internal.file.FileMetadata;
 import org.gradle.internal.hash.FileHasher;
 import org.gradle.internal.hash.HashCode;
+import org.gradle.internal.hash.Hasher;
+import org.gradle.internal.hash.Hashing;
 import org.gradle.internal.nativeintegration.filesystem.FileSystem;
 import org.gradle.internal.serialize.AbstractSerializer;
 import org.gradle.internal.serialize.Decoder;
 import org.gradle.internal.serialize.Encoder;
 import org.gradle.internal.serialize.HashCodeSerializer;
-import org.gradle.internal.serialize.InterningStringSerializer;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 public class CachingFileHasher implements FileHasher {
-    private final PersistentIndexedCache<String, FileInfo> cache;
+    private final PersistentIndexedCache<HashCode, FileInfo> cache;
     private final FileHasher delegate;
     private final FileSystem fileSystem;
-    private final StringInterner stringInterner;
     private final FileTimeStampInspector timestampInspector;
     private final FileHasherStatistics.Collector statisticsCollector;
+    private final HashCode configurationHash;
 
     public CachingFileHasher(
         FileHasher delegate,
         CrossBuildFileHashCache store,
-        StringInterner stringInterner,
         FileTimeStampInspector timestampInspector,
         String cacheName,
         FileSystem fileSystem,
         int inMemorySize,
         FileHasherStatistics.Collector statisticsCollector
     ) {
+        this(delegate, store, timestampInspector, cacheName, fileSystem, inMemorySize, statisticsCollector, hasher -> {});
+    }
+
+    public CachingFileHasher(
+        FileHasher delegate,
+        CrossBuildFileHashCache store,
+        FileTimeStampInspector timestampInspector,
+        String cacheName,
+        FileSystem fileSystem,
+        int inMemorySize,
+        FileHasherStatistics.Collector statisticsCollector,
+        Consumer<Hasher> configurationHasher
+    ) {
         this.delegate = delegate;
         this.fileSystem = fileSystem;
         this.cache = store.createCache(
-            PersistentIndexedCacheParameters.of(cacheName, new InterningStringSerializer(stringInterner), new FileInfoSerializer()),
+            // TODO - would there be value in interning these hashcodes?
+            PersistentIndexedCacheParameters.of(cacheName, new HashCodeSerializer(), new FileInfoSerializer()),
             inMemorySize,
             true);
-        this.stringInterner = stringInterner;
         this.timestampInspector = timestampInspector;
         this.statisticsCollector = statisticsCollector;
+        Hasher hasher = Hashing.newHasher();
+        configurationHasher.accept(hasher);
+        this.configurationHash = hasher.hash();
     }
 
     @Override
@@ -83,8 +99,9 @@ public class CachingFileHasher implements FileHasher {
 
     private FileInfo snapshot(File file, long length, long timestamp) {
         String absolutePath = file.getAbsolutePath();
+        HashCode key = calculateKey(absolutePath);
         if (timestampInspector.timestampCanBeUsedToDetectFileChange(absolutePath, timestamp)) {
-            FileInfo info = cache.getIfPresent(absolutePath);
+            FileInfo info = cache.getIfPresent(key);
 
             if (info != null && length == info.length && timestamp == info.timestamp) {
                 return info;
@@ -93,13 +110,20 @@ public class CachingFileHasher implements FileHasher {
 
         HashCode hash = delegate.hash(file);
         FileInfo info = new FileInfo(hash, length, timestamp);
-        cache.put(stringInterner.intern(absolutePath), info);
+        cache.put(key, info);
         statisticsCollector.reportFileHashed(length);
         return info;
     }
 
     public void discard(String path) {
-        cache.remove(path);
+        cache.remove(calculateKey(path));
+    }
+
+    private HashCode calculateKey(String path) {
+        Hasher hasher = Hashing.newHasher();
+        hasher.putHash(configurationHash);
+        hasher.putString(path);
+        return hasher.hash();
     }
 
     @VisibleForTesting

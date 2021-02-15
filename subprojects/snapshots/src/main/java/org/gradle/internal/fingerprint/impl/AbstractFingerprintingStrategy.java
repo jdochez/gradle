@@ -18,14 +18,19 @@ package org.gradle.internal.fingerprint.impl;
 
 import org.gradle.internal.fingerprint.CurrentFileCollectionFingerprint;
 import org.gradle.internal.fingerprint.FingerprintingStrategy;
+import org.gradle.internal.fingerprint.SnapshotHashCodeNormalizer;
+import org.gradle.internal.hash.HashCode;
+import org.gradle.internal.snapshot.FileSystemLocationSnapshot;
 
 public abstract class AbstractFingerprintingStrategy implements FingerprintingStrategy {
     private final String identifier;
     private final CurrentFileCollectionFingerprint emptyFingerprint;
+    private final SnapshotHashCodeNormalizer snapshotHashCodeNormalizer;
 
-    public AbstractFingerprintingStrategy(String identifier) {
+    public AbstractFingerprintingStrategy(String identifier, SnapshotHashCodeNormalizer snapshotHashCodeNormalizer) {
         this.identifier = identifier;
         this.emptyFingerprint = new EmptyCurrentFileCollectionFingerprint(identifier);
+        this.snapshotHashCodeNormalizer = snapshotHashCodeNormalizer;
     }
 
     @Override
@@ -36,5 +41,9 @@ public abstract class AbstractFingerprintingStrategy implements FingerprintingSt
     @Override
     public CurrentFileCollectionFingerprint getEmptyFingerprint() {
         return emptyFingerprint;
+    }
+
+    protected HashCode normalizedHashCode(FileSystemLocationSnapshot snapshot) {
+        return snapshotHashCodeNormalizer.normalize(snapshot);
     }
 }

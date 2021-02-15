@@ -21,6 +21,7 @@ import org.gradle.api.internal.file.TestFiles
 import org.gradle.internal.MutableReference
 import org.gradle.internal.fingerprint.DirectorySensitivity
 import org.gradle.internal.fingerprint.FingerprintingStrategy
+import org.gradle.internal.fingerprint.SnapshotHashCodeNormalizer
 import org.gradle.internal.snapshot.CompositeFileSystemSnapshot
 import org.gradle.internal.snapshot.FileSystemLocationSnapshot
 import org.gradle.internal.snapshot.FileSystemSnapshot
@@ -82,7 +83,7 @@ class PathNormalizationStrategyTest extends Specification {
     }
 
     def "sensitivity NONE"() {
-        def fingerprints = collectFingerprints(IgnoredPathFingerprintingStrategy.INSTANCE)
+        def fingerprints = collectFingerprints(new IgnoredPathFingerprintingStrategy(SnapshotHashCodeNormalizer.NONE))
         expect:
         allFilesToFingerprint.each { file ->
             if (file.isFile() || !file.exists()) {
@@ -105,8 +106,8 @@ class PathNormalizationStrategyTest extends Specification {
 
         where:
         strategy << [
-            NameOnlyFingerprintingStrategy.DEFAULT,
-            NameOnlyFingerprintingStrategy.IGNORE_DIRECTORIES
+            new NameOnlyFingerprintingStrategy(DirectorySensitivity.DEFAULT, SnapshotHashCodeNormalizer.NONE),
+            new NameOnlyFingerprintingStrategy(DirectorySensitivity.IGNORE_DIRECTORIES, SnapshotHashCodeNormalizer.NONE)
         ]
     }
 
@@ -144,8 +145,8 @@ class PathNormalizationStrategyTest extends Specification {
 
         where:
         strategy << [
-            AbsolutePathFingerprintingStrategy.DEFAULT,
-            AbsolutePathFingerprintingStrategy.IGNORE_DIRECTORIES
+            new AbsolutePathFingerprintingStrategy(DirectorySensitivity.DEFAULT, SnapshotHashCodeNormalizer.NONE),
+            new AbsolutePathFingerprintingStrategy(DirectorySensitivity.IGNORE_DIRECTORIES, SnapshotHashCodeNormalizer.NONE)
         ]
     }
 

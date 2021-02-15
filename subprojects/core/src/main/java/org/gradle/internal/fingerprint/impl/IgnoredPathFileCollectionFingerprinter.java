@@ -19,11 +19,12 @@ package org.gradle.internal.fingerprint.impl;
 import org.gradle.api.tasks.FileNormalizer;
 import org.gradle.internal.fingerprint.FileCollectionSnapshotter;
 import org.gradle.internal.fingerprint.IgnoredPathInputNormalizer;
+import org.gradle.internal.fingerprint.SnapshotHashCodeNormalizer;
 
 public class IgnoredPathFileCollectionFingerprinter extends AbstractFileCollectionFingerprinter {
 
-    public IgnoredPathFileCollectionFingerprinter(FileCollectionSnapshotter fileCollectionSnapshotter) {
-        super(IgnoredPathFingerprintingStrategy.INSTANCE, fileCollectionSnapshotter);
+    public IgnoredPathFileCollectionFingerprinter(FileCollectionSnapshotter fileCollectionSnapshotter, SnapshotHashCodeNormalizer snapshotHashCodeNormalizer) {
+        super(new IgnoredPathFingerprintingStrategy(snapshotHashCodeNormalizer), fileCollectionSnapshotter);
     }
 
     @Override

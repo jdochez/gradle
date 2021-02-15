@@ -21,6 +21,7 @@ import org.gradle.internal.file.FileType;
 import org.gradle.internal.fingerprint.DirectorySensitivity;
 import org.gradle.internal.fingerprint.FileSystemLocationFingerprint;
 import org.gradle.internal.fingerprint.FingerprintHashingStrategy;
+import org.gradle.internal.fingerprint.SnapshotHashCodeNormalizer;
 import org.gradle.internal.snapshot.FileSystemLocationSnapshot;
 import org.gradle.internal.snapshot.FileSystemSnapshot;
 import org.gradle.internal.snapshot.RootTrackingFileSystemSnapshotHierarchyVisitor;
@@ -35,14 +36,11 @@ import java.util.Map;
  * File names for root directories are ignored.
  */
 public class NameOnlyFingerprintingStrategy extends AbstractFingerprintingStrategy {
-
-    public static final NameOnlyFingerprintingStrategy DEFAULT = new NameOnlyFingerprintingStrategy(DirectorySensitivity.DEFAULT);
-    public static final NameOnlyFingerprintingStrategy IGNORE_DIRECTORIES = new NameOnlyFingerprintingStrategy(DirectorySensitivity.IGNORE_DIRECTORIES);
     public static final String IDENTIFIER = "NAME_ONLY";
     private final DirectorySensitivity directorySensitivity;
 
-    private NameOnlyFingerprintingStrategy(DirectorySensitivity directorySensitivity) {
-        super(IDENTIFIER);
+    public NameOnlyFingerprintingStrategy(DirectorySensitivity directorySensitivity, SnapshotHashCodeNormalizer snapshotNormalizer) {
+        super(IDENTIFIER, snapshotNormalizer);
         this.directorySensitivity = directorySensitivity;
     }
 
@@ -62,7 +60,7 @@ public class NameOnlyFingerprintingStrategy extends AbstractFingerprintingStrate
                 if (processedEntries.add(absolutePath) && directorySensitivity.shouldFingerprint(snapshot)) {
                     FileSystemLocationFingerprint fingerprint = isRoot && snapshot.getType() == FileType.Directory
                         ? IgnoredPathFileSystemLocationFingerprint.DIRECTORY
-                        : new DefaultFileSystemLocationFingerprint(snapshot.getName(), snapshot);
+                        : new DefaultFileSystemLocationFingerprint(snapshot.getName(), snapshot.getType(), normalizedHashCode(snapshot));
                     builder.put(absolutePath, fingerprint);
                 }
                 return SnapshotVisitResult.CONTINUE;

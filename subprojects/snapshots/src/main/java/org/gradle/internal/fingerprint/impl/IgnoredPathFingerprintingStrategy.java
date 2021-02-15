@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import org.gradle.internal.fingerprint.DirectorySensitivity;
 import org.gradle.internal.fingerprint.FileSystemLocationFingerprint;
 import org.gradle.internal.fingerprint.FingerprintHashingStrategy;
+import org.gradle.internal.fingerprint.SnapshotHashCodeNormalizer;
 import org.gradle.internal.snapshot.FileSystemLocationSnapshot;
 import org.gradle.internal.snapshot.FileSystemLocationSnapshot.FileSystemLocationSnapshotVisitor;
 import org.gradle.internal.snapshot.FileSystemSnapshot;
@@ -36,13 +37,11 @@ import java.util.Map;
  * Ignores directories.
  */
 public class IgnoredPathFingerprintingStrategy extends AbstractFingerprintingStrategy {
-
-    public static final IgnoredPathFingerprintingStrategy INSTANCE = new IgnoredPathFingerprintingStrategy();
     public static final String IDENTIFIER = "IGNORED_PATH";
     public static final String IGNORED_PATH = "";
 
-    private IgnoredPathFingerprintingStrategy() {
-        super(IDENTIFIER);
+    public IgnoredPathFingerprintingStrategy(SnapshotHashCodeNormalizer snapshotNormalizer) {
+        super(IDENTIFIER, snapshotNormalizer);
     }
 
     @Override
@@ -69,7 +68,7 @@ public class IgnoredPathFingerprintingStrategy extends AbstractFingerprintingStr
                 private void visitNonDirectoryEntry(FileSystemLocationSnapshot snapshot) {
                     String absolutePath = snapshot.getAbsolutePath();
                     if (processedEntries.add(absolutePath)) {
-                        builder.put(absolutePath, IgnoredPathFileSystemLocationFingerprint.create(snapshot.getType(), snapshot.getHash()));
+                        builder.put(absolutePath, IgnoredPathFileSystemLocationFingerprint.create(snapshot.getType(), normalizedHashCode(snapshot)));
                     }
                 }
             });
