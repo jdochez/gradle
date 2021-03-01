@@ -88,12 +88,42 @@ trait ValidationMessageChecker {
         config.render "An input file collection couldn't be resolved, making it impossible to determine task dependencies. Possible solution: Consider using Task.dependsOn instead."
     }
 
+    String implicitDependency(@DelegatesTo(value=ImplicitDependency, strategy=Closure.DELEGATE_FIRST) Closure<?> spec = {}) {
+        def config = display(ImplicitDependency, 'implicit_dependency', spec)
+        config.render "Gradle detected a problem with the following location: '${config.location.absolutePath}'. Task '${config.consumer}' uses this output of task '${config.producer}' without declaring an explicit or implicit dependency or an implicit dependency. This can lead to incorrect results being produced, depending on what order the tasks are executed. Possible solutions: Declare task '${config.producer}' as an input of '${config.consumer}' or declare an explicit dependency on '${config.producer}' to '${config.consumer}' using Task#dependsOn or declare an explicit dependency on '${config.producer}' to '${config.consumer}' using Task#mustRunAfter."
+    }
+
     private <T extends ValidationMessageDisplayConfiguration> T display(Class<T> clazz, String docSection, @DelegatesTo(value = ValidationMessageDisplayConfiguration, strategy = Closure.DELEGATE_FIRST) Closure<?> spec) {
         def conf = clazz.newInstance(this)
         conf.section = docSection
         spec.delegate = conf
         spec()
         return (T) conf
+    }
+
+    static class ImplicitDependency extends ValidationMessageDisplayConfiguration<ImplicitDependency> {
+        String producer
+        String consumer
+        File location
+
+        ImplicitDependency(ValidationMessageChecker checker) {
+            super(checker)
+        }
+
+        ImplicitDependency producer(String producer) {
+            this.producer = producer
+            this
+        }
+
+        ImplicitDependency consumer(String consumer) {
+            this.consumer = consumer
+            this
+        }
+
+        ImplicitDependency at(File location) {
+            this.location = location
+            this
+        }
     }
 
     static class MissingNormalization extends ValidationMessageDisplayConfiguration<MissingNormalization> {

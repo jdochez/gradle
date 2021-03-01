@@ -85,7 +85,6 @@ dependencies {
         exclude(module = "slf4j-simple")
     }
     implementation(testFixtures(project(":core")))
-    implementation(testFixtures(project(":model-core")))
 
     testRuntimeOnly(project(":distributions-core")) {
         because("Tests instantiate DefaultClassLoaderRegistry which requires a 'gradle-plugins.properties' through DefaultPluginModuleRegistry")

@@ -226,7 +226,7 @@ public class LocalTaskNodeExecutor implements NodeExecutor {
             problem.withId(ValidationProblemId.IMPLICIT_DEPENDENCY)
                 .reportAs(Severity.WARNING)
                 .withDescription(() -> "Gradle detected a problem with the following location: '" + consumerProducerPath + "'")
-                .happensBecause(() -> String.format("Task '%s' uses this output of task '%s' without declaring an explicit or implicit dependency or an implicit dependency (declaring task '%s' as an input). "
+                .happensBecause(() -> String.format("Task '%s' uses this output of task '%s' without declaring an explicit or implicit dependency or an implicit dependency. "
                         + "This can lead to incorrect results being produced, depending on what order the tasks are executed",
                     consumer,
                     producer,
