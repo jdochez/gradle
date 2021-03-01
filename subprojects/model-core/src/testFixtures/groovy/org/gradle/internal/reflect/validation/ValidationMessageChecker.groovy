@@ -83,6 +83,11 @@ trait ValidationMessageChecker {
         config.render "is annotated with @${config.annotatedWith} but missing a normalization strategy. If you don't declare the normalization, outputs can't be re-used between machines or locations on the same machine, therefore caching efficiency drops significantly. Possible solution: Declare the normalization strategy by annotating the property with either @PathSensitive, @Classpath or @CompileClasspath."
     }
 
+    String unresolvableInput(@DelegatesTo(value=SimpleMessage, strategy=Closure.DELEGATE_FIRST) Closure<?> spec = {}) {
+        def config = display(SimpleMessage, 'unresolvable_input', spec)
+        config.render "An input file collection couldn't be resolved, making it impossible to determine task dependencies. Possible solution: Consider using Task.dependsOn instead."
+    }
+
     private <T extends ValidationMessageDisplayConfiguration> T display(Class<T> clazz, String docSection, @DelegatesTo(value = ValidationMessageDisplayConfiguration, strategy = Closure.DELEGATE_FIRST) Closure<?> spec) {
         def conf = clazz.newInstance(this)
         conf.section = docSection
